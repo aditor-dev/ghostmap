@@ -26,6 +26,7 @@ import { CONFIG } from '../lib/config.js';
 import { extractPartitaIvaWithRaw } from '../lib/partitaIva.js';
 import { logger, sleep } from '../lib/utils.js';
 import { getStatistics } from '../lib/Statistics.js';
+import { isPrivateOrSpecialAddr } from '../lib/ExportAPI.js'; // SEC FIX (2026-08-27): SSRF guard, see scrapeWithTab below
 // §3.D.3 CYCLE BREAK (2026-06-11): this module must NOT import the
 // orchestrator (email-scraper-v2) back — that was the only import cycle in
 // the codebase (flagged by eslint import/no-cycle). The HIGH-003 circuit
@@ -596,6 +597,23 @@ export async function scrapeWithTab(business, options = {}) {
         return { emails: [], socialLinks: {}, successfulPage: null, duration: 0 };
     }
 
+    // SEC FIX (2026-08-27): business.website comes from Google Maps listing
+    // data, not user-typed input — attacker-influenceable by whoever
+    // controls the listing. Unlike the plain-fetch path (see
+    // isValidScrapableUrl in email-scraper-v2.js, which now has the same
+    // guard), this path opens an ACTUAL Chrome tab and injects a script
+    // into it via chrome.scripting.executeScript — reject private/loopback/
+    // link-local/cloud-metadata IP literals BEFORE ever creating that tab.
+    try {
+        const guardUrl = new URL(business.website.startsWith('http') ? business.website : 'https://' + business.website);
+        if (isPrivateOrSpecialAddr(guardUrl.hostname)) {
+            logger.warn(`[TAB FALLBACK] ⏭️ Skipping - website resolves to a private/internal address: ${guardUrl.hostname}`);
+            return { emails: [], socialLinks: {}, successfulPage: null, duration: Date.now() - startTime };
+        }
+    } catch (e) {
+        // URL parse error - fall through; createTab() below will fail safely on a malformed URL
+    }
+
     // HIGH-003 FIX: Check circuit breaker before opening tab
     try {
         const url = new URL(business.website.startsWith('http') ? business.website : 'https://' + business.website);
@@ -696,6 +714,13 @@ export async function scrapeWithTab(business, options = {}) {
             // STEP 3: Try Each Page in Priority Order
             // ═══════════════════════════════════════════════════
             const pagesToTry = getOrderedPages(baseUrl, config.MAX_PAGES_TO_TRY);
+            // Consistency fix (2026-08-27): the homepage error-page check
+            // (above) returns `error: reason` so callers can distinguish
+            // "hard failure" from "checked pages, found nothing". The
+            // mid-page check added below reached the same final `return`
+            // with no `error` field at all — indistinguishable from a clean
+            // scrape. Track it here so both paths report consistently.
+            let midPageError = null;
 
             for (let i = 0; i < pagesToTry.length; i++) {
                 const { url, label } = pagesToTry[i];
@@ -716,6 +741,28 @@ export async function scrapeWithTab(business, options = {}) {
 
                         // Wait for JS to execute
                         await sleep(config.PAGE_SETTLE_DELAY);
+
+                        // STRANGE-BEHAVIOR-FIX-001 (extended, 2026-08-26): re-check
+                        // for a Chrome error interstitial after EACH subsequent-page
+                        // navigation, not just the initial homepage load. Without
+                        // this, a mid-session connection error/rate-limit hit on
+                        // /contact or /about was caught generically inside
+                        // extractEmailsFromTab()'s try/catch and logged as a plain
+                        // "[TAB] Extraction failed" — silently treated the same as
+                        // "page loaded fine, no email here": no circuit-breaker
+                        // signal, no backoff, loop just moved on to the next guessed
+                        // page. Now attributed and backed off exactly like the
+                        // homepage check above.
+                        const midPageErrorCheck = await isErrorPage(tab.id);
+                        if (midPageErrorCheck.isError) {
+                            logger.warn(`[TAB] ⚠️ ${label} unreachable - Chrome showing error page (${midPageErrorCheck.reason})`);
+                            midPageError = midPageErrorCheck.reason;
+                            try {
+                                const domain = new URL(baseUrl).hostname;
+                                await _circuit.recordCircuitFailure(domain, 'CONNECTION_ERROR');
+                            } catch (_) { /* URL parse edge case - non-fatal */ }
+                            break; // further pages on this domain are unlikely to fare better
+                        }
                     }
 
                     // FIX: Check tab still exists before extraction
@@ -782,7 +829,7 @@ export async function scrapeWithTab(business, options = {}) {
                 }
             }
 
-            return { emails: Array.from(foundEmails), socialLinks, italianTaxCodes, successfulPage };
+            return { emails: Array.from(foundEmails), socialLinks, italianTaxCodes, successfulPage, error: midPageError };
         })();
 
         // Race between scraping and timeout

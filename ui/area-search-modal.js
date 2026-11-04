@@ -493,9 +493,16 @@ async function openAreaSearchModal() {
     // optimistically if the caller knows monitoring is active in UI
     // state, otherwise default to config view. We log the failure so
     // the user can see it in DevTools rather than silently misbehaving.
+    // BUG FIX (2026-08-27): raw chrome.runtime.sendMessage() never rejects on
+    // SW silence/eviction — it can just hang forever (see ui/messaging.js's
+    // own docblock; UI-3/UI-5 fixed this exact hazard everywhere ELSE in the
+    // UI, but area-search-modal.js was missed). The comment above already
+    // describes this hazard for the "SW unreachable" case but the code only
+    // handled a REJECTED promise, not a hung one. window.sendMessageWithTimeout
+    // (loaded before this file in sidepanel.html) times out after 15s instead.
     let response;
     try {
-        response = await chrome.runtime.sendMessage({ action: 'get_area_search_status' });
+        response = await window.sendMessageWithTimeout({ action: 'get_area_search_status' });
     } catch (err) {
         console.warn('[AreaSearchModal] get_area_search_status failed:', err?.message);
     }
@@ -627,7 +634,7 @@ async function handleStart() {
     let startedSuccessfully = false;
 
     try {
-        const response = await chrome.runtime.sendMessage({
+        const response = await window.sendMessageWithTimeout({
             action: 'start_area_search',
             payload: {
                 city,
@@ -660,13 +667,13 @@ async function handleStart() {
 
 async function handlePause() {
     const pauseBtn = document.getElementById('pauseAreaSearchBtn');
-    const response = await chrome.runtime.sendMessage({ action: 'get_area_search_status' });
+    const response = await window.sendMessageWithTimeout({ action: 'get_area_search_status' });
 
     if (response?.isPaused) {
-        await chrome.runtime.sendMessage({ action: 'resume_area_search' });
+        await window.sendMessageWithTimeout({ action: 'resume_area_search' });
         pauseBtn.innerHTML = '⏸ Pause';
     } else {
-        await chrome.runtime.sendMessage({ action: 'pause_area_search' });
+        await window.sendMessageWithTimeout({ action: 'pause_area_search' });
         pauseBtn.innerHTML = '▶ Resume';
     }
 }
@@ -674,7 +681,7 @@ async function handlePause() {
 async function handleCancel() {
     if (document.getElementById('cancelAreaSearchBtn').textContent === 'Stop') {
         if (!confirm('Stop the search?')) return;
-        await chrome.runtime.sendMessage({ action: 'stop_area_search' });
+        await window.sendMessageWithTimeout({ action: 'stop_area_search' });
         showConfigView();
         document.getElementById('startAreaSearchBtn').disabled = false;
         document.getElementById('startAreaSearchBtn').innerHTML = '🚀 Start Turbo Search';

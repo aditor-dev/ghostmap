@@ -799,14 +799,21 @@ async function retryFailedBusinesses() {
         console.error('[GhostMap] Retry failed:', error);
         showToast('Retry failed', 'error');
     } finally {
+        // BUG FIX (2026-08-27): this used to rebuild the button's innerHTML
+        // wholesale, which parses a BRAND-NEW <span id="retryCount"> — the
+        // element cached once at load in `elements.retryCount` (line ~112)
+        // gets detached from the DOM right here. Every later
+        // updateStatsDebounced() write (elements.retryCount.textContent =
+        // state.stats.failed) then silently writes to the orphaned node —
+        // the visible badge freezes at whatever it showed at THIS moment,
+        // for the rest of the session, after the very first retry click.
+        // Fix: update the existing cached span's text in place; never
+        // recreate the SVG/markup that doesn't actually change here.
         if (elements.retryFailedBtn) {
             elements.retryFailedBtn.disabled = false;
-            elements.retryFailedBtn.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="1 4 1 10 7 10"></polyline>
-                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                </svg>
-                Retry Failed (<span id="retryCount">${state.stats.failed || 0}</span>)`;
+        }
+        if (elements.retryCount) {
+            elements.retryCount.textContent = state.stats.failed || 0;
         }
     }
 }
@@ -923,8 +930,15 @@ function updateStatsDebounced(stats, queueStatus = null) {
         withEmail: stats.withEmail || 0,
         withWebsite: stats.withWebsite || 0,
         withPhone: stats.withPhone || 0,
-        queue: queueStatus?.pending || stats.emailQueue || stats.queue || 0,
-        failed: stats.failed || queueStatus?.failed || 0,
+        // BUG FIX (2026-08-27): `||` chains over fields that can legitimately
+        // be 0 (matches the class of bug the UI-10 FIX below already
+        // addresses, and BUG-Bulk-Falsy-Defaults in animations.js) — e.g.
+        // stats.failed===0 (the true, healthy state: no permanent failures)
+        // but queueStatus?.failed is a nonzero DIFFERENT queue-level metric
+        // would fall through and show a false nonzero "Failed" count. `??`
+        // only skips null/undefined, so an authoritative 0 is respected.
+        queue: queueStatus?.pending ?? stats.emailQueue ?? stats.queue ?? 0,
+        failed: stats.failed ?? queueStatus?.failed ?? 0,
         successRate: stats.successRatePercent || stats.successRate || 0,
         avgTime: stats.avgScrapingTimeSeconds || stats.avgTime || null
     };

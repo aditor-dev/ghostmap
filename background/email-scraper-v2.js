@@ -21,6 +21,7 @@
 import { CONFIG } from '../lib/config.js';
 import { logger } from '../lib/utils.js';
 import { sitemapDiscovery } from '../lib/SitemapDiscovery.js';
+import { isPrivateOrSpecialAddr } from '../lib/ExportAPI.js'; // SEC FIX (2026-08-27): shared SSRF guard, see isValidScrapableUrl below
 // BUG-4 (2026-07-07): updateBusinessMerge replaces the stale-snapshot full put.
 // Each save here read `business` a fresh snapshot at job start, then scraped for
 // seconds/minutes; a full put of `{...business, ...updates}` regressed any field
@@ -738,6 +739,21 @@ export function isValidScrapableUrl(url) {
 
         // Must have a dot (reject "localhost" or "not-a-url")
         if (!hostname.includes('.')) {
+            return false;
+        }
+
+        // SEC FIX (2026-08-27): reject private/loopback/link-local/cloud-
+        // metadata IP literals. `url` here ultimately comes from
+        // business.website — Google Maps listing data, not user-typed
+        // input — so it's attacker-influenceable (whoever controls the
+        // listing controls this field). Combined with manifest.json's
+        // broad `host_permissions: ["https://*/*"]`, an unfiltered literal
+        // IP here would let a malicious/mistaken listing point the
+        // extension's privileged fetch at an internal host and have the
+        // response body read back — the exact SSRF class the webhook
+        // export in lib/ExportAPI.js already guards against. Reusing that
+        // same tested guard here rather than a second hand-rolled copy.
+        if (isPrivateOrSpecialAddr(hostname)) {
             return false;
         }
 
@@ -1553,8 +1569,18 @@ export async function scrapeEmailForBusiness(business, currentBusinessName, pars
         logger.info(`│ Starting parallel: homepage fetch + sitemap discovery           │`);
         logger.info(`└─────────────────────────────────────────────────────────────────┘`);
 
+        // SEC FIX (2026-08-27): the homepage URL used to reach fetchWebsiteHTML()
+        // completely unvalidated — isValidScrapableUrl() was only ever applied
+        // to *derived* sitemap/guessed sub-page URLs (see below), never to the
+        // business's own website field, the one place a malicious/mistaken
+        // Google Maps listing could point at an internal host. Gate it here too.
+        const homepageIsScrapeable = isValidScrapableUrl(homepageUrl);
+        if (!homepageIsScrapeable) {
+            logger.warn(`[SSRF-GUARD] Skipping homepage fetch - URL failed validation: ${homepageUrl}`);
+        }
+
         // Start both operations simultaneously
-        const homepageFetchPromise = fetchWebsiteHTML(homepageUrl).catch(err => {
+        const homepageFetchPromise = !homepageIsScrapeable ? Promise.resolve(null) : fetchWebsiteHTML(homepageUrl).catch(err => {
             logger.warn(`[P0 OPTIMIZATION] Homepage fetch failed: ${err.message}`);
             // R4 / M14-bis: a robots disallow on the homepage MUST survive this
             // swallow. Pre-fix it vanished here (return null, lastError never
@@ -1569,7 +1595,11 @@ export async function scrapeEmailForBusiness(business, currentBusinessName, pars
             return null; // Don't fail the whole operation
         });
 
-        const sitemapDiscoveryPromise = sitemapDiscovery.discover(homepageUrl).catch(err => {
+        // SEC FIX (2026-08-27): sitemap discovery fetches a URL derived from
+        // this SAME homepageUrl (typically `<origin>/sitemap.xml`) — if the
+        // homepage itself failed the SSRF guard above, discovering from the
+        // same disallowed origin would defeat the point of skipping it.
+        const sitemapDiscoveryPromise = !homepageIsScrapeable ? Promise.resolve([]) : sitemapDiscovery.discover(homepageUrl).catch(err => {
             logger.warn(`[SITEMAP] Discovery failed: ${err.message || err}`);
             return []; // Continue with empty array
         });

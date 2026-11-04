@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Ghost Map Pro",
+  "name": "Acuity Map Scraper",
   "version": "9.13.0",
   "description": "Extract business leads from Google Business Profiles with smart email discovery and export.",
   "icons": {
@@ -26,7 +26,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Open Ghost Map",
+    "default_title": "Open Acuity Map Scraper",
     "default_icon": {
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png",

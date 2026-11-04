@@ -1,6 +1,6 @@
 <div align="center">
 
-# 👻🗺️ Ghost Map Pro
+# 👻🗺️ Acuity Map Scraper
 
 ### The free, open-source **Google Maps scraper** Chrome extension — turn any Google Maps search into a clean CSV of **business leads**.
 
@@ -13,17 +13,17 @@
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-7d54f0.svg?style=flat-square)](#-contributing)
 ![GitHub stars](https://img.shields.io/github/stars/uppifyagency/ghostmap?style=flat-square&color=34A853)
 
-[**What it does**](#-what-it-does) · [**Features**](#-features) · [**Install**](#-installation) · [**How it works**](#-how-it-works) · [**vs Apify / Outscraper**](#-ghost-map-pro-vs-apify-vs-outscraper-vs-the-official-api) · [**FAQ**](#-faq) · [**Changelog**](CHANGELOG.md)
+[**What it does**](#-what-it-does) · [**Features**](#-features) · [**Install**](#-installation) · [**How it works**](#-how-it-works) · [**vs Apify / Outscraper**](#-acuity-map-scraper-vs-apify-vs-outscraper-vs-the-official-api) · [**FAQ**](#-faq) · [**Changelog**](CHANGELOG.md)
 
 </div>
 
 ---
 
-## 🧭 What is Ghost Map Pro?
+## 🧭 What is Acuity Map Scraper?
 
-**Ghost Map Pro is a free Google Maps scraper that runs entirely as a Chrome extension (Manifest V3).** Run a search on Google Maps — *"ristoranti Milano"*, *"plumbers London"*, *"dentists New York"* — and it turns the results into a structured **CSV of B2B leads**: business name, phone, website, **email**, address, rating, review count, opening hours, category, geo-coordinates and (for Italian businesses) **Partita IVA / VAT number**.
+**Acuity Map Scraper is a free Google Maps scraper that runs entirely as a Chrome extension (Manifest V3).** Run a search on Google Maps — *"ristoranti Milano"*, *"plumbers London"*, *"dentists New York"* — and it turns the results into a structured **CSV of B2B leads**: business name, phone, website, **email**, address, rating, review count, opening hours, category, geo-coordinates and (for Italian businesses) **Partita IVA / VAT number**.
 
-It is the **do-it-yourself, zero-cost alternative to paid Google Maps scrapers** like Apify, Outscraper and Octoparse — but instead of renting a cloud actor and paying per row, Ghost Map Pro lives inside **your own browser session** and reads the exact same data Google Maps already loaded into the page. Nothing leaves your machine except the requests that fetch each business's *own public website* to discover its email.
+It is the **do-it-yourself, zero-cost alternative to paid Google Maps scrapers** like Apify, Outscraper and Octoparse — but instead of renting a cloud actor and paying per row, Acuity Map Scraper lives inside **your own browser session** and reads the exact same data Google Maps already loaded into the page. Nothing leaves your machine except the requests that fetch each business's *own public website* to discover its email.
 
 > **In one line:** a **Google Maps lead extractor** that scrapes business name, phone, website, **email** and reviews into a CSV you can drop straight into your CRM — locally, privately, for free.
 
@@ -31,7 +31,7 @@ It is the **do-it-yourself, zero-cost alternative to paid Google Maps scrapers**
 
 ## ✨ What it does
 
-You search on Google Maps; Ghost Map Pro quietly captures every business in the results and builds a lead table:
+You search on Google Maps; Acuity Map Scraper quietly captures every business in the results and builds a lead table:
 
 | Output | What's inside |
 |---|---|
@@ -75,7 +75,7 @@ Open it in Excel/Sheets, or import it straight into your CRM and start the outre
 
 ## 📦 Installation
 
-> Ghost Map Pro is a developer-mode (unpacked) Chrome extension. It is **not** on the Chrome Web Store — you load it directly from source, which keeps it free and fully auditable.
+> Acuity Map Scraper is a developer-mode (unpacked) Chrome extension. It is **not** on the Chrome Web Store — you load it directly from source, which keeps it free and fully auditable.
 
 1. **Download the code** — clone or [download the ZIP](https://github.com/uppifyagency/ghostmap/archive/refs/heads/main.zip):
    ```bash
@@ -92,7 +92,7 @@ Open it in Excel/Sheets, or import it straight into your CRM and start the outre
 ## 🖱️ Usage
 
 1. Open **google.com/maps** and run any search (e.g. `hotels Florence`, `idraulici Roma`).
-2. Click the 👻 icon to open the **Ghost Map Pro side panel**.
+2. Click the 👻 icon to open the **Acuity Map Scraper side panel**.
 3. Capture the results in whichever mode fits:
    - **Scroll** — scroll the Maps result list; the extension captures silently as new businesses stream in.
    - **Turbo** — one click grabs every result currently loaded.
@@ -104,7 +104,7 @@ Open it in Excel/Sheets, or import it straight into your CRM and start the outre
 
 ## 🧱 How it works
 
-Ghost Map Pro reads the data **Google Maps already loaded into the page** (`window.APP_INITIALIZATION_STATE`) and watches the incremental JSPB payloads Maps streams while you scroll — so it captures the full result set without opening a tab per business or hitting any paid API.
+Acuity Map Scraper reads the data **Google Maps already loaded into the page** (`window.APP_INITIALIZATION_STATE`) and watches the incremental JSPB payloads Maps streams while you scroll — so it captures the full result set without opening a tab per business or hitting any paid API.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
@@ -156,7 +156,7 @@ ui/sidepanel.html / .js             # the panel + state controller
 
 ## 🛡️ Anti-detection
 
-The risk when scraping Google Maps is the rate of requests, so Ghost Map Pro is built to look like a real user:
+The risk when scraping Google Maps is the rate of requests, so Acuity Map Scraper is built to look like a real user:
 
 - **Coherent fingerprints** — `FingerprintGenerator` keeps User-Agent, Accept-Language q-values and client hints internally consistent (no telltale mismatches).
 - **Session pool** — rotates and persists sessions across service-worker restarts.
@@ -167,9 +167,9 @@ Even so: use it gently and at human scale. See [Responsible use](#-privacy--resp
 
 ---
 
-## ⚖️ Ghost Map Pro vs Apify vs Outscraper vs the official API
+## ⚖️ Acuity Map Scraper vs Apify vs Outscraper vs the official API
 
-| | 👻 **Ghost Map Pro** | 💰 Apify / Outscraper | 🏢 Google Places API |
+| | 👻 **Acuity Map Scraper** | 💰 Apify / Outscraper | 🏢 Google Places API |
 |---|---|---|---|
 | **Cost** | Free, open source | Pay per run / per row | Free tier, then per-1000 billing |
 | **Setup** | Load unpacked extension | Account + actor / token | Cloud project + billing + key |
@@ -186,7 +186,7 @@ If you've searched for a *"google maps scraper github"*, an *"apify alternative"
 
 ## 🔐 Privacy & responsible use
 
-- **Local-first.** Ghost Map Pro has no backend. Captured leads live in your browser's local storage until you export them; nothing is uploaded to us.
+- **Local-first.** Acuity Map Scraper has no backend. Captured leads live in your browser's local storage until you export them; nothing is uploaded to us.
 - **Public business data.** It reads the same business listings any visitor sees on Google Maps, plus emails published on each company's own public website — i.e. B2B contact details.
 - **Your responsibility.** You are responsible for using the data lawfully. Respect Google's Terms of Service, each website's terms, `robots.txt`, and applicable privacy law (**GDPR**, CAN-SPAM, etc.) — especially before any outreach. This tool is intended for legitimate B2B lead research, not spam.
 
@@ -195,7 +195,7 @@ If you've searched for a *"google maps scraper github"*, an *"apify alternative"
 ## ❓ FAQ
 
 **Is it legal to scrape Google Maps?**
-Scraping publicly visible business listings for B2B research is widely done, but legality depends on your jurisdiction, how you use the data, and the platforms' terms. Ghost Map Pro only reads public data and keeps it local — but compliance (Google ToS, GDPR, outreach laws) is on you. When in doubt, ask a lawyer.
+Scraping publicly visible business listings for B2B research is widely done, but legality depends on your jurisdiction, how you use the data, and the platforms' terms. Acuity Map Scraper only reads public data and keeps it local — but compliance (Google ToS, GDPR, outreach laws) is on you. When in doubt, ask a lawyer.
 
 **Do I need a Google Maps / Places API key?**
 No. That's the whole point — it reads the data already loaded in your browser.
@@ -228,7 +228,7 @@ PRs and issues welcome. The codebase is plain MV3 JavaScript with no build step 
 
 <div align="center">
 
-**Ghost Map Pro** · a free **Google Maps scraper & lead extractor** Chrome extension
+**Acuity Map Scraper** · a free **Google Maps scraper & lead extractor** Chrome extension
 Built by [Vlad Vrinceanu](https://www.linkedin.com/in/vladvrinceanu/) · maintained by [Uppify](https://github.com/uppifyagency)
 
 *Keywords: google maps scraper · scrape google maps · google maps lead generation · google maps email extractor · google maps data extractor · google business profile scraper · apify / outscraper / octoparse alternative · chrome extension · manifest v3 · no API.*

@@ -124,12 +124,15 @@ import { shutdownInfrastructure } from '../lib/infrastructure.js';
 import { circuitBreaker } from '../lib/CircuitBreaker.js';
 import { createSessionState } from '../lib/swState.js';
 
-// 2026-05-15: dev log bridge. When loaded as unpacked (CONFIG.isDevelopment
-// derived from `!manifest.update_url`), every console.* + unhandled error +
+// 2026-05-15: dev log bridge. When CONFIG.isDevelopment is true (see the
+// SEC FIX comment in lib/config.js — gated on a "-dev" marker in the local
+// manifest version, NOT on unpacked-vs-Web-Store, since this project is
+// always distributed unpacked), every console.* + unhandled error +
 // unhandled rejection is forwarded to http://127.0.0.1:9876/log so the
 // operator (and a connected coding agent watching the file) can see the
 // SW's under-the-hood activity without keeping the SW DevTools window
-// pinned. No-op in production. See dev-log-server.mjs + lib/devLogger.js.
+// pinned. No-op for a clean distributed build. See dev-log-server.mjs +
+// lib/devLogger.js.
 import { installDevLogger } from '../lib/devLogger.js';
 if (CONFIG.isDevelopment) {
     installDevLogger('SW');
