@@ -1,6 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Acuity Map Scraper",
+  "author": "Acuity Digital Agency",
   "version": "9.13.0",
   "description": "Extract business leads from Google Business Profiles with smart email discovery and export.",
   "icons": {

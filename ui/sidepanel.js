@@ -304,7 +304,7 @@ async function initialize() {
 
         const message = document.createElement('p');
         message.style.color = '#9ca3af';
-        message.textContent = 'Ghost Map Pro failed to start.';
+        message.textContent = 'Acuity Map Scraper failed to start.';
 
         const errorDetail = document.createElement('p');
         errorDetail.style.cssText = 'font-size: 12px; color: #6b7280; margin-top: 10px;';
@@ -1351,7 +1351,7 @@ async function resetAll() {
         // cleared but the business DB could not be confirmed wiped (likely open
         // in another Maps tab) — tell the user instead of claiming success.
         if (resetResponse?.status === 'partial') {
-            showToast(resetResponse.message || 'Reset incomplete — close other Ghost Map tabs and retry', 'error');
+            showToast(resetResponse.message || 'Reset incomplete — close other Acuity Map Scraper tabs and retry', 'error');
         } else if (resetResponse?.status === 'error') {
             showToast('Reset failed — see logs', 'error');
         } else {

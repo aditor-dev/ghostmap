@@ -229,7 +229,7 @@ PRs and issues welcome. The codebase is plain MV3 JavaScript with no build step 
 <div align="center">
 
 **Acuity Map Scraper** · a free **Google Maps scraper & lead extractor** Chrome extension
-Built by [Vlad Vrinceanu](https://www.linkedin.com/in/vladvrinceanu/) · maintained by [Uppify](https://github.com/uppifyagency)
+Built and maintained by **Acuity Digital Agency**
 
 *Keywords: google maps scraper · scrape google maps · google maps lead generation · google maps email extractor · google maps data extractor · google business profile scraper · apify / outscraper / octoparse alternative · chrome extension · manifest v3 · no API.*
 

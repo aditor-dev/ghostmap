@@ -2850,7 +2850,7 @@ async function factoryReset() {
             });
             return {
                 status: 'partial',
-                message: 'Reset incomplete: the database could not be confirmed cleared — it may be open in another Ghost Map tab. Close other tabs and retry.',
+                message: 'Reset incomplete: the database could not be confirmed cleared — it may be open in another Acuity Map Scraper tab. Close other tabs and retry.',
                 details: { clearedBusinesses, dbDelete: dbDeleteResult }
             };
         }
